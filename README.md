@@ -22,19 +22,19 @@ The implementation is written in TypeScript. Currently, it consists of two packa
 
 6. if you get a permission denied error you may need to make the packages/prisma-generate/dist/bin.js executable (chmod +x)
 
-7. docker-compose up -d
+7. `docker-compose up -d`
 
-8. yarn migrate
+8. `yarn migrate`
 
 after that you can use repco like this:
 
-### ingest revision from cba.media
-yarn cli ingest
-### log the stored revisions
-yarn cli log-revisions
-### start the server 
+#### ingest revision from cba.media
+`yarn cli ingest`
+#### log the stored revisions
+`yarn cli log-revisions`
 
-## (on the dev-server branch until merged into one PR)
-yarn server
+## start the server 
+#### (on the dev-server branch until merged into one PR)
+`yarn server`
 # get revisions over HTTP
-curl http://localhost:8765
+`curl http://localhost:8765`
