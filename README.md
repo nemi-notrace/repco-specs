@@ -36,5 +36,5 @@ after that you can use repco like this:
 ## start the server 
 #### (on the dev-server branch until merged into one PR)
 `yarn server`
-# get revisions over HTTP
+#### get revisions over HTTP
 `curl http://localhost:8765`
