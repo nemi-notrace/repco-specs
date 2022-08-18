@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 // @ts-ignore
 import 'express-async-errors'
 import * as error from './error.js'
@@ -5,22 +6,17 @@ import cors from 'cors'
 import express from 'express'
 import { graphqlHTTP } from 'express-graphql'
 import { PrismaClient } from 'repco-core'
+import { buildSchemaSync } from 'type-graphql'
 import Routes from './routes.js'
-import { context } from './context'
-import { schema } from './schema.js'
+import { typegraphql } from './prisma.js'
 
 export function runServer(prisma: PrismaClient, port: number) {
   const app = express()
-  app.use(
-    '/graphql',
-    graphqlHTTP({
-      schema,
-      context: context,
-      graphiql: true,
-    }),
-  )
+
   app.use(express.json({ limit: '100mb' }))
   app.use(cors())
+  app.use(express.urlencoded({ extended: true }))
+
   app.use((req, res, next) => {
     res.locals.prisma = prisma
     next()
@@ -36,6 +32,18 @@ export function runServer(prisma: PrismaClient, port: number) {
 
   app.use(error.notFoundHandler)
   app.use(error.handler)
+  const schema = buildSchemaSync({
+    resolvers: typegraphql.resolvers,
+    validate: false,
+  })
+  app.use(
+    '/graphql',
+    graphqlHTTP({
+      schema: schema,
+      graphiql: true,
+      context: { prisma: prisma },
+    }),
+  )
 
   return app.listen(port, () => {
     console.log(`Repco server listening on http://localhost:${port}`)
