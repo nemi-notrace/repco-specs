@@ -44,6 +44,10 @@ generator zod {
   prismaJsonNullability    = false
   includeJSExtension       = true
 }
+generator typegraphql {
+  provider = "typegraphql-prisma"
+  output = "../generated/typegraphql"
+}
 
 enum ContentGroupingVariant {
   EPISODIC
