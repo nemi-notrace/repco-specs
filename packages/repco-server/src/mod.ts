@@ -4,10 +4,11 @@ import 'express-async-errors'
 import * as error from './error.js'
 import cors from 'cors'
 import express from 'express'
-import { makeExecutableSchema } from '@graphql-tools/schema'
 import { graphqlHTTP } from 'express-graphql'
 import { PrismaClient } from 'repco-core'
-import { default as router, default as Routes } from './routes.js'
+import { buildSchemaSync } from 'type-graphql'
+import Routes from './routes.js'
+import { typegraphql } from './prisma.js'
 
 export function runServer(prisma: PrismaClient, port: number) {
   const app = express()
@@ -31,30 +32,11 @@ export function runServer(prisma: PrismaClient, port: number) {
 
   app.use(error.notFoundHandler)
   app.use(error.handler)
-
-  const resolvers = {
-    Query: {
-      allContentItems: () => {
-        return prisma.contentItem.findMany()
-      },
-    },
-  }
-
-  const typeDefs = `
-  type contentItem {
-    uid: String!
-    title: String
-  }
-
-  type Query {
-    allContentItems: [contentItem!]!
-  }
-`
-  const schema = makeExecutableSchema({
-    resolvers,
-    typeDefs,
+  const schema = buildSchemaSync({
+    resolvers: typegraphql.resolvers,
+    validate: false,
   })
-  router.use(
+  app.use(
     '/graphql',
     graphqlHTTP({
       schema: schema,
