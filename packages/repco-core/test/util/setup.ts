@@ -69,8 +69,7 @@ export async function setupDb(test: Test, port: number) {
   )
   await spawn('yarn', ['prisma', 'migrate', 'reset', '-f', '--skip-generate'], {
     log: test.comment,
-    verbose,
-    env,
+    stdio: 'inherit',
   })
   test.teardown(() => {
     spawn(

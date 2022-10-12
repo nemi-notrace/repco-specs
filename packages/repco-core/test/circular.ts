@@ -1,10 +1,11 @@
 import test from 'brittle'
 import { setup } from './util/setup.js'
-import { EntityForm, Repo } from '../lib.js'
+import { EntityForm, PrismaClient } from '../lib.js'
 import {
   BaseDataSource,
   DataSource,
   DataSourceDefinition,
+  DataSourceRegistry,
   ingestUpdatesFromDataSources,
 } from '../src/datasource.js'
 import { EntityBatch } from '../src/entity.js'
@@ -27,18 +28,18 @@ class TestDataSource extends BaseDataSource implements DataSource {
       'urn:repco:concept:1': {
         type: 'Concept',
         content: {
+          uid: 'urn:repco:concept:1',
           name: 'concept1',
-          SameAs: { uri: 'urn:repco:concept:2' },
+          sameAs: 'urn:repco:concept:2',
         },
-        entityUris: ['urn:repco:concept:1'],
       },
       'urn:repco:concept:2': {
         type: 'Concept',
         content: {
+          uid: 'urn:repco:concept:2',
           name: 'concept2',
-          // SameAs: { uri: 'urn:repco:concept:1' },
+          sameAs: 'urn:repco:concept:1',
         },
-        entityUris: ['urn:repco:concept:2'],
       },
     }
   }
@@ -54,27 +55,27 @@ class TestDataSource extends BaseDataSource implements DataSource {
         entities: [this.DATA['urn:repco:concept:1']],
       }
     }
+    console.log('fetchUpdates', cursor, res)
     return res
   }
 
   async fetchByUID(uid: string): Promise<EntityForm[] | null> {
     const res = [this.DATA[uid]].filter((x) => x)
+    console.log('fetchByUid', uid, res)
     return res
   }
 }
 
 test('circular', async (assert) => {
-  const prisma = await setup(assert)
-  const repo = await Repo.create(prisma, 'test')
+  await setup(assert)
+  console.log('setup complete')
+  const prisma = new PrismaClient()
   const datasource = new TestDataSource()
-  repo.registerDataSource(datasource)
-  await ingestUpdatesFromDataSources(repo)
+  const dsr = new DataSourceRegistry()
+  dsr.register(datasource)
+  console.log('now ingest')
+  await ingestUpdatesFromDataSources(prisma, dsr)
+  console.log('ingested')
   const entities = await prisma.concept.findMany()
-  assert.is(entities.length, 2)
-  // const datasource2 = new TestDataSource()
-  // const dsr2 = new DataSourceRegistry()
-  // dsr2.register(datasource2)
-  // console.log('now ingest 2')
-  // await ingestUpdatesFromDataSources(repo)
-  // console.log('entities', entities)
+  console.log('entities', entities)
 })

@@ -6,7 +6,6 @@
  */
 
 import { repco } from 'repco-prisma'
-import { Headers } from './mod.js'
 import {
   ContentGrouping,
   ContentGroupingVariant,
@@ -17,38 +16,48 @@ import {
 
 export type { ContentItem, MediaAsset, ContentGrouping, Revision }
 export { ContentGroupingVariant }
-
+// export type AnyEntityContent = repco.EntityOutput['content']
 export type AnyEntityContent = { uid: string }
-export type AllEntityTypes = repco.EntityOutput['type']
+export type AnyEntityType = repco.EntityOutput['type']
 
 export type EntityBatch = {
   cursor: string
   entities: EntityForm[]
 }
 
-export type EntityForm = repco.EntityInput & Headers
-
-export type EntityInputWithHeaders = repco.EntityInputWithUid & {
-  headers: Headers
-}
-
-export type EntityInputWithRevision = repco.EntityInputWithUid & {
+export type Entity = {
+  type: string
+  content: AnyEntityContent
   revision: Revision
 }
 
 export type EntityMaybeContent<T extends boolean = true> = T extends true
-  ? EntityInputWithRevision
+  ? Entity
   : T extends false
-  ? Omit<EntityInputWithRevision, 'content'>
+  ? Omit<Entity, 'content'>
   : never
 
-// TODO: This should be the output types.
-export type EntityWithRevision = EntityInputWithRevision
-// export type EntityWithRevision = repco.EntityInputWithUid & {
-//   revision: Revision
-// }
+export type TypedEntity<T extends AnyEntityType> = {
+  type: T
+  content: Extract<repco.EntityOutput, { type: T }>['content']
+  revision: Revision
+}
 
-export type EntityType = repco.EntityOutput['type']
+export type MaybeTypedEntity<T = any> = {
+  type: T extends AnyEntityType ? T : string
+  content: T extends AnyEntityType
+    ? Extract<repco.EntityOutput, { type: T }>['content']
+    : AnyEntityContent
+  revision: Revision
+}
+
+export function assumeType<T extends AnyEntityType>(
+  entity: Entity,
+): TypedEntity<T> {
+  return entity as TypedEntity<T>
+}
+
+export type EntityFormContent = Omit<AnyEntityContent, 'revisionId'>
 
 // TODO: This should be the output types.
 export type TypedEntity<T extends EntityType> = Extract<

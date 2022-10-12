@@ -1,10 +1,26 @@
 import { DMMF } from '@prisma/generator-helper'
 import { SourceFile } from 'ts-morph'
-import { isRepcoEntity, hasSkipAnnotation, findRelations } from './util.js'
+
+function hasEntityAnnotation(docstring?: string) {
+  if (!docstring) return false
+  const lines = docstring.split('\n')
+  for (const line of lines) {
+    if (line.match(/\s*@repco\(Entity\)\s*/g)) return true
+  }
+  return false
+}
+
+function isRepcoEntity(model: DMMF.Model) {
+  return hasEntityAnnotation(model.documentation)
+}
 
 export function generateTypes(dmmf: DMMF.Document, file: SourceFile) {
-  const imports = ['PrismaPromise', 'Prisma']
+  const imports = ['PrismaClient', 'PrismaPromise', 'Prisma']
   const entityModels = dmmf.datamodel.models.filter(isRepcoEntity)
+  for (const model of entityModels) {
+    generateModelTypes(model, file)
+    imports.push(model.name)
+  }
   file.addImportDeclaration({
     moduleSpecifier: '@prisma/client',
     namedImports: imports,
@@ -22,8 +38,9 @@ export function generateTypes(dmmf: DMMF.Document, file: SourceFile) {
     defaultImport: '* as form',
   })
   generateEntityTypes(entityModels, file)
-  generateParseFunction(entityModels, file)
+  generateValidateFunction(entityModels, file)
   generateUpsertFunction(entityModels, file)
+  generateUpsertFunction2(entityModels, file)
   generateExtractRelationsFunction(entityModels, file)
 }
 
@@ -63,10 +80,10 @@ function generateEntityTypes(models: DMMF.Model[], file: SourceFile) {
   })
 }
 
-function generateParseFunction(models: DMMF.Model[], file: SourceFile) {
-  let code = `switch (type) {`
+function generateValidateFunction(models: DMMF.Model[], file: SourceFile) {
+  let code = `input.revisionId = revisionId
+		switch (type) {`
   for (const model of models) {
-    const parser = lowerName(model)
     code += `
 			case '${model.name}': {
 				const content = form.${parser}.parse(input)
@@ -100,10 +117,10 @@ function generateExtractRelationsFunction(
     switch (input.type) {
   `
   for (const model of models) {
-    const relationFields = findRelations(model)
+    const uidFields = findUidFields(model)
     let inner = ``
-    if (relationFields.length) {
-      for (const field of relationFields) {
+    if (uidFields.length) {
+      for (const field of uidFields) {
         const path = `content.${field.name}`
         const values = field.isList
           ? `${path}.filter(x => x !== null)`
@@ -124,8 +141,8 @@ function generateExtractRelationsFunction(
     }
     code += `
 			case '${model.name}': {
-        const relations: common.Relation[] = []
-        const content = input.content as form.${model.name}Input
+        const relations: Relation[] = []
+        const content = input.content as ${model.name}Input
         ${inner}
         return relations
       }
@@ -136,11 +153,22 @@ function generateExtractRelationsFunction(
 				throw new Error('Unsupported entity type: ' + input.type)
 		}`
   file.addTypeAlias({
+    name: `Relation`,
+    type: `{
+      fieldName: string,
+      targetType: string,
+      values?: string[],
+      isList: boolean
+    }`,
+    isExported: true,
+  })
+  file.addTypeAlias({
     name: `EntityLike`,
     type: `{
       type: string,
-      uid: string,
-      content: any,
+      content: {
+        uid: string
+      },
     }`,
     isExported: true,
   })
@@ -149,7 +177,7 @@ function generateExtractRelationsFunction(
     isAsync: false,
     name: 'extractRelations',
     parameters: [{ name: 'input', type: 'EntityLike' }],
-    returnType: 'common.Relation[]',
+    returnType: 'Relation[]',
     statements: code,
   })
 }
@@ -161,17 +189,19 @@ function lowerName(model: DMMF.Model): string {
 function generateUpsertFunction(models: DMMF.Model[], file: SourceFile) {
   let code = `
 	const type = input.type
-  switch (type) {
-    `
-
+	const uid = input.content.uid
+	let entity: EntityOutput
+	switch (type) {`
   for (const model of models) {
-    const relationFields = findRelations(model)
-    let assignStmt = ''
-    // This code enables a declaration that would change the input data model to accept
-    // ids on the field names without `Uid` suffix. This also changes the prisma data type
-    // to the XORed Unchecked input.
-    if (relationFields.length) {
-      for (const field of relationFields) {
+    const uidFields = findUidFields(model)
+    let transform = ``
+    if (uidFields.length) {
+      for (const field of uidFields) {
+        // if (field.relationFromFields) {
+        //   for (const uidFieldName of field.relationFromFields) {
+        //     transform += `${uidFieldName}: undefined,`
+        //   }
+        // }
         const path = `input.content.${field.name}`
         let valueExpr, uidPath
         if (field.isList) {
@@ -221,3 +251,85 @@ function generateUpsertFunction(models: DMMF.Model[], file: SourceFile) {
   })
 }
 
+function generateUpsertFunction2(models: DMMF.Model[], file: SourceFile) {
+  let code = `
+	const type = input.type
+	const uid = input.content.uid
+	switch (type) {`
+  for (const model of models) {
+    const uidFields = findUidFields(model)
+    let transform = ``
+    if (uidFields.length) {
+      for (const field of uidFields) {
+        // if (field.relationFromFields) {
+        //   for (const uidFieldName of field.relationFromFields) {
+        //     transform += `${uidFieldName}: undefined,`
+        //   }
+        // }
+        const path = `input.content.${field.name}`
+        let inner
+        if (field.isList) {
+          inner = `${path}?.map(uid => ({ uid }))`
+        } else {
+          inner = `{ uid: ${path}! }`
+        }
+        transform += `
+					${field.name}: ${path} ? {
+						connect: ${inner}
+          } : {},`
+      }
+    }
+    code += `
+			case '${model.name}': {
+        const data = {
+          ...input.content,
+          revision: { connect: { id: revisionId }},
+          ${transform}
+        }
+				return prisma.${lowerName(model)}.upsert({
+					where: { uid },
+					create: data,
+          update: data,
+          select: {}
+				})
+			}
+			`
+  }
+  code += `
+		  default:
+				throw new Error('Unsupported entity type: ' + type)
+		}
+		`
+  file.addFunction({
+    isExported: true,
+    // isAsync: true,
+    name: 'upsertEntity2',
+    parameters: [
+      { name: 'prisma', type: 'PrismaClient' },
+      { name: 'input', type: 'EntityInput' },
+      { name: 'revisionId', type: 'string' },
+    ],
+    returnType: 'PrismaPromise<any>',
+    statements: code,
+  })
+}
+
+// function hasRevisionId(model: DMMF.Model): boolean {
+//   return !!model.fields.find((field) => field.name === 'revisionId')
+// }
+
+function findUidFields(model: DMMF.Model): DMMF.Field[] {
+  const res = []
+  for (const field of model.fields) {
+    if (
+      field.kind === 'object' &&
+      field.type !== 'Revision'
+      // && field.isList
+      // && field.relationToFields?.length
+      // && field.relationToFields[0] === 'uid'
+    ) {
+      res.push(field)
+    }
+  }
+  return res
+}
