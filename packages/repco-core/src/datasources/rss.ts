@@ -1,6 +1,6 @@
-import { Link } from 'repco-common/zod'
 import RssParser from 'rss-parser'
 import zod from 'zod'
+import { Link } from 'repco-common/zod'
 import {
   DataSource,
   DataSourceDefinition,
@@ -258,7 +258,7 @@ export class RssDataSource implements DataSource {
         mediaType: 'audio',
         File: { uri: fileUid },
       },
-      entityUris: [mediaUri],
+      entityUris: [mediaUid],
       revisionUris: [this._urn('rev', 'media', revisionSlug)],
     })
 

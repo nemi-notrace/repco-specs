@@ -33,14 +33,14 @@ enum AgentType {
 // Core data model
 
 model Repo {
-  uid       String     @id @unique
-  name      String?
-  revisions Revision[]
+  uid      String     @id @unique
+  name     String?
+  Revision Revision[]
 }
 
 model Agent {
   uid        String      @id @unique
-  type       AgentType
+  type       AgentType?
   DataSource DataSource?
   User       User?
   Revisions  Revision[]
@@ -63,21 +63,18 @@ model DataSource {
 }
 
 model Block {
-  cid        String    @id @unique
+  cid      String    @id @unique
   // len        Int
-  bytes      Bytes
+  bytes    Bytes
   // links      String[]
-  IsRevision Revision? @relation("RevisionBlock")
-  IsContent  Revision? @relation("ContentBlock")
+  Revision Revision? @relation("RevisionBlock")
+  Content  Revision? @relation("ContentBlock")
 }
 
 model Entity {
   uid        String @id @unique
   revisionId String @unique
   type       String
-
-  // uris String[]
-  // deleted boolean
 
   Revision Revision   @relation(fields: [revisionId], references: [id])
   Metadata Metadata[]
@@ -94,7 +91,7 @@ model Revision {
 
   // core relation scalars
   prevRevisionId String? @unique
-  entityUid      String
+  uid            String
   repoUid        String
   agentUid       String // uid of writing agent (datasource or user)
 
@@ -161,24 +158,26 @@ model ContentGrouping {
 
 /// @repco(Entity)
 model ContentItem {
-  uid                 String            @id @unique /// @zod.refine(imports.isValidUID)
-  revisionId          String            @unique
-  revision            Revision          @relation(fields: [revisionId], references: [id])
-  title               String
-  subtitle            String?
-  pubDate             DateTime? // TODO: Review this
-  summary             String?
-  content             String
-  contentFormat       String
-  primaryGrouping     ContentGrouping?  @relation("primaryGrouping", fields: [primaryGroupingUid], references: [uid])
-  primaryGroupingUid  String?
-  additionalGroupings ContentGrouping[]
-  license             License?          @relation(fields: [licenseUid], references: [uid])
-  licenseUid          String?
-  mediaAssets         MediaAsset[]
-  contributions       Contribution[]
-  concepts            Concept[]
-  broadcastEvents     BroadcastEvent[]
+  uid           String    @id @unique /// @zod.refine(imports.isValidUID)
+  revisionId    String    @unique
+  title         String
+  subtitle      String?
+  pubDate       DateTime? // TODO: Review this
+  summary       String?
+  content       String
+  contentFormat String
+
+  primaryGroupingUid String?
+  licenseUid         String?
+
+  Revision            Revision          @relation(fields: [revisionId], references: [id])
+  AdditionalGroupings ContentGrouping[]
+  BroadcastEvents     BroadcastEvent[]
+  Concepts            Concept[]
+  Contributions       Contribution[]
+  License             License?          @relation(fields: [licenseUid], references: [uid])
+  MediaAssets         MediaAsset[]
+  PrimaryGrouping     ContentGrouping?  @relation("primaryGrouping", fields: [primaryGroupingUid], references: [uid])
 }
 
 /// @repco(Entity)
@@ -206,11 +205,15 @@ model MediaAsset {
   teaserImageUid String?
   licenseUid     String?
 
-  license    License? @relation(fields: [licenseUid], references: [uid])
-  licenseUid String?
-
-  contributions Contribution[]
-  concepts      Concept[]
+  Revision      Revision       @relation(fields: [revisionId], references: [id])
+  File          File           @relation("file", fields: [fileUid], references: [uid])
+  ContentItems  ContentItem[]
+  Transcripts   Transcript[]
+  Chapters      Chapter[]
+  TeaserImage   File?          @relation("thumbnail", fields: [teaserImageUid], references: [uid])
+  License       License?       @relation(fields: [licenseUid], references: [uid])
+  Contributions Contribution[]
+  Concepts      Concept[]
 }
 
 /// @repco(Entity)
@@ -324,32 +327,33 @@ model File {
 
 /// @repco(Entity)
 model Concept {
-  uid        String   @id @unique
-  revisionId String   @unique
-  revision   Revision @relation(fields: [revisionId], references: [id])
+  uid        String @id @unique
+  revisionId String @unique
 
-  originNamespace String?
-  name            String
-  summary         String?
-  description     String?
-  wikidataID      String?
-  sameAsUid       String? @unique
+  originNamespace    String?
+  name               String
+  summary            String?
+  description        String?
+  wikidataIdentifier String?
+  sameAsUid          String? @unique
 
-  sameAs        Concept? @relation("isSameAs", fields: [sameAsUid], references: [uid])
-  sameAsReverse Concept? @relation("isSameAs")
-
-  contentItems ContentItem[]
-  mediaAssets  MediaAsset[]
+  Revision      Revision      @relation(fields: [revisionId], references: [id])
+  SameAs        Concept?      @relation("isSameAs", fields: [sameAsUid], references: [uid])
+  SameAsReverse Concept?      @relation("isSameAs")
+  ContentItems  ContentItem[]
+  MediaAssets   MediaAsset[]
 }
 
+/// @repco(Entity)
 model Metadata {
-  uid        String   @unique
-  revisionId String   @unique
-  revision   Revision @relation(fields: [revisionId], references: [id])
+  uid        String @unique
+  revisionId String @unique
 
-  targetUid String
   namespace String
   content   Json
 
-  targetEntity Entity @relation(fields: [targetUid], references: [uid])
+  targetUid String
+
+  Revision     Revision @relation(fields: [revisionId], references: [id])
+  TargetEntity Entity   @relation(fields: [targetUid], references: [uid])
 }

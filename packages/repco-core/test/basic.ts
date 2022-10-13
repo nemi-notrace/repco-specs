@@ -1,13 +1,16 @@
 import test from 'brittle'
 import { setup } from './util/setup.js'
-import { Repo } from '../lib.js'
+import { PrismaClient, Repo } from '../lib.js'
 
 test('smoke', async (assert) => {
-  const prisma = await setup(assert)
-  const repo = await Repo.create(prisma, 'default')
+  await setup(assert)
+  const prisma = new PrismaClient()
+  const repo = new Repo(prisma, 'default')
+  await repo.ensureCreated()
   const input = {
     type: 'ContentItem',
     content: {
+      // uid: 'urn:repco:foo:bar',
       title: 'foo',
       contentFormat: 'boo',
       content: 'badoo',
@@ -19,6 +22,8 @@ test('smoke', async (assert) => {
   const revisions = await repo.fetchRevisionsWithContent()
   assert.is(revisions.length, 1)
   const revision = revisions[0]
+  // assert.is(revision.content.uid, input.content.uid)
   assert.is(typeof revision.revision.id, 'string')
   assert.is((revision.content as any).title, 'foo')
+  console.log(revisions)
 })

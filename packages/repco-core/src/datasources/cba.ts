@@ -1,5 +1,4 @@
 import { form } from 'repco-prisma'
-import * as zod from 'zod'
 import { fetch } from 'undici'
 import { CbaPost, CbaSeries } from './cba/types.js'
 import {
@@ -39,12 +38,6 @@ function parseUrn(urn: string) {
     path: parts.slice(3).join(':'),
   }
 }
-
-const configSchema = zod.object({
-  endpoint: zod.string().url().optional(),
-  apiKey: zod.string().optional()
-})
-type ConfigSchema = zod.infer<typeof configSchema>
 
 export class CbaDataSourcePlugin implements DataSourcePlugin {
   createInstance(config: any) {
@@ -262,7 +255,7 @@ export class CbaDataSource implements DataSource {
   }
 
   private _mapPost(post: CbaPost): EntityForm[] {
-    const content: form.ContentItemInput  = {
+    const content = {
       content: post.content.rendered,
       contentFormat: 'text/html',
       title: post.title.rendered,
@@ -270,8 +263,7 @@ export class CbaDataSource implements DataSource {
       // primaryGroupingUid: null,
       subtitle: 'missing',
       summary: post.excerpt.rendered,
-      MediaAssets: post.mediaAssets.map(uri => ({ uri })),
-      PrimaryGrouping: { uri: this._urn('series', post.post_parent) }
+      mediaAssets: post.mediaAssets,
     }
     const revisionId = this._revisionUrn(
       'post',

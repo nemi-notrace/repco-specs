@@ -112,7 +112,7 @@ export class DataSourceRegistry extends Registry<DataSource> {
 
   async fetchEntities(uris: string[]) {
     const fetched: EntityForm[] = []
-    const notFound = uris
+    const missing = uris
     for (const uri of uris) {
       const matchingSources = this.getForUID(uri)
       let found = false
@@ -124,9 +124,9 @@ export class DataSourceRegistry extends Registry<DataSource> {
           break
         }
       }
-      if (!found) notFound.push(uri)
+      if (!found) missing.push(uri)
     }
-    return { fetched, notFound }
+    return { fetched, missing }
   }
 }
 
@@ -180,6 +180,25 @@ export async function ingestUpdatesFromDataSource(
   return {
     count,
     cursor,
+  }
+}
+
+export async function storeEntityBatchFromDataSource(
+  prisma: PrismaClient,
+  datasources: DataSourceRegistry,
+  datasource: DataSource,
+  batch: EntityBatch,
+) {
+  for (const entity of batch.entities) {
+    entity.agent = datasource.definition.uid
+    // console.log('IN', entity)
+    const stored = await storeEntityWithDataSourceFallback(
+      prisma,
+      datasources,
+      entity,
+    )
+    // console.log('rid', stored.revision.id)
+    // console.log('OUT', stored)
   }
 }
 

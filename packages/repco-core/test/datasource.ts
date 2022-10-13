@@ -89,7 +89,10 @@ test('datasource', async (assert) => {
   })
   assert.is(entities.length, 1)
   const entity = entities[0]
+  assert.is(entity.uid, 'urn:test:content:1')
   assert.is(entity.MediaAssets.length, 1)
+  assert.is(entity.MediaAssets[0].uid, 'urn:test:media:1'),
+    assert.is(entity.MediaAssets[0].File.uid, 'urn:test:file:1')
   assert.is(
     entity.MediaAssets[0].File.contentUrl,
     'http://example.org/file1.mp3',
