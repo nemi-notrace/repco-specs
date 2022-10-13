@@ -112,7 +112,7 @@ export class DataSourceRegistry extends Registry<DataSource> {
 
   async fetchEntities(uris: string[]) {
     const fetched: EntityForm[] = []
-    const missing = uris
+    const notFound = uris
     for (const uri of uris) {
       const matchingSources = this.getForUID(uri)
       let found = false
@@ -124,9 +124,9 @@ export class DataSourceRegistry extends Registry<DataSource> {
           break
         }
       }
-      if (!found) missing.push(uri)
+      if (!found) notFound.push(uri)
     }
-    return { fetched, missing }
+    return { fetched, notFound }
   }
 }
 

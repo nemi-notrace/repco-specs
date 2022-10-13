@@ -28,27 +28,25 @@ export type EntityBatch = {
 
 export type EntityForm = repco.EntityInput & Headers
 
-export type Entity = {
-  type: string
-  content: AnyEntityContent
-  type: string
-  uid: string
-  content: Record<string, unknown>
+export type FullEntity = repco.EntityInputWithUid & {
   revision: Revision
 }
 
+// export type Entity = {
+//   type: string
+//   uid: string
+//   content: Record<string, unknown>
+//   revision: Revision
+// }
+
 export type EntityMaybeContent<T extends boolean = true> = T extends true
-  ? Entity
+  ? FullEntity
   : T extends false
-  ? Omit<Entity, 'content'>
+  ? Omit<FullEntity, 'content'>
   : never
 
-export function safeCheckType<T extends EntityType>(
-  entity: EntityWithRevision,
-  type: T,
-): TypedEntityWithRevision<T> | null {
-  if (entity.type !== type) return null
-  return entity as TypedEntityWithRevision<T>
+export type EntityRevision = repco.EntityOutput & {
+  revision: Revision
 }
 
 // export type RevisionForm = {
