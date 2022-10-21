@@ -4,18 +4,22 @@ import { useEffect, useRef, useState } from 'react'
 import { gql } from 'urql'
 import { graphqlQuery } from '~/lib/graphql.server'
 
-const FIRST = 50
+const LIMIT = 10
 
 const QUERY = gql`
   query LoadContentItemsByOffset(
-    $after: Cursor
     $first: Int
+    $last: Int
+    $after: Cursor
+    $before: Cursor
     $orderBy: [ContentItemsOrderBy!]
     $includes: String
   ) {
     contentItems(
-      after: $after
       first: $first
+      last: $last
+      after: $after
+      before: $before
       orderBy: $orderBy
       filter: { title: { includes: $includes } }
     ) {
@@ -46,14 +50,18 @@ const parseNumber = ({ value, defaultValue }: parseNumberParams) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url)
-  const after = url.searchParams.get('page')
-
+  const after = url.searchParams.get('after')
+  const before = url.searchParams.get('before')
+  const last = before ? LIMIT : null
+  const first = last ? null : LIMIT
   const orderBy = url.searchParams.get('order') || 'TITLE_ASC'
   const includes = url.searchParams.get('includes') || ''
-
+  console.log('BEFORE', before, 'AFTER', after)
   return await graphqlQuery(QUERY, {
+    first: first,
+    last: last,
     after: after,
-    first: FIRST,
+    before: before,
     orderBy: orderBy,
     includes: includes,
   })
@@ -70,19 +78,23 @@ export default function Ip() {
   const startRef = useRef<any>(null)
 
   useEffect(() => {
-    console.log(pageInfo)
     const observerEnd = new IntersectionObserver((entries: any) => {
       const end = entries[0]
 
       if (end.isIntersecting) {
+        console.log(end)
+        if (end.intersectionRatio >= 1) {
+          return
+        }
+
         if (!pageInfo.hasNextPage) return
         if (pageInfo.hasNextPage) {
-          fetcher.load(`/ip?page=${pageInfo.endCursor}`)
+          fetcher.load(`/ip?after=${pageInfo.endCursor}`)
           if (fetcher.data) {
             setItemsToRender(fetcher.data.data.contentItems.nodes)
             setPageInfo(fetcher.data.data.contentItems.pageInfo)
-            setFetchMore(true)
             observerEnd.disconnect()
+            window.scrollBy(0, 10)
             return
           }
         }
@@ -93,15 +105,20 @@ export default function Ip() {
       const start = entries[0]
 
       if (start.isIntersecting) {
+        if (start.intersectionRatio >= 1) {
+          return
+        }
         if (!pageInfo.hasPreviousPage) return
-        if (pageInfo.hasPreviousPage && fetchMore) {
-          fetcher.load(`/ip?page=${pageInfo.startCursor}`)
+        if (pageInfo.hasPreviousPage) {
+          console.log('PRE')
+          fetcher.load(`/ip?before=${pageInfo.startCursor}`)
 
           if (fetcher.data) {
             setItemsToRender(fetcher.data.data.contentItems.nodes)
             setPageInfo(fetcher.data.data.contentItems.pageInfo)
-            setFetchMore(false)
             observerStart.disconnect()
+            window.scrollBy(0, 10)
+
             return
           }
         }
@@ -110,13 +127,20 @@ export default function Ip() {
 
     observerStart.observe(startRef.current)
     observerEnd.observe(parentRef.current)
-  }, [fetcher, pageInfo.endCursor, pageInfo.hasNextPage, parentRef])
+  }, [
+    fetchMore,
+    fetcher,
+    pageInfo,
+    pageInfo.endCursor,
+    pageInfo.hasNextPage,
+    parentRef,
+  ])
 
   return (
     <div>
-      <div className="h-4 bg-black" ref={startRef}></div>
+      <div className="h-10 bg-black" ref={startRef}></div>
       {itemsToRender.map((e: any, index: any) => (
-        <div className="h-10" key={e.uid}>
+        <div className="h-32" key={e.uid}>
           {index}: {e.uid}
         </div>
       ))}
