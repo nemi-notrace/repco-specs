@@ -1,6 +1,6 @@
 import test from 'brittle'
 import { setup } from './util/setup.js'
-import { DataSource, EntityForm, Repo } from '../lib.js'
+import { DataSource, EntityForm, PrismaClient, Repo } from '../lib.js'
 import {
   BaseDataSource,
   DataSourceDefinition,
@@ -73,7 +73,8 @@ class TestDataSource extends BaseDataSource implements DataSource {
 }
 
 test('datasource', async (assert) => {
-  const prisma = await setup(assert)
+  await setup(assert)
+  const prisma = new PrismaClient()
   const repo = await Repo.create(prisma, 'test')
   const datasource = new TestDataSource()
   repo.registerDataSource(datasource)
@@ -89,10 +90,8 @@ test('datasource', async (assert) => {
   })
   assert.is(entities.length, 1)
   const entity = entities[0]
-  assert.is(entity.uid, 'urn:test:content:1')
+  console.log(entity)
   assert.is(entity.MediaAssets.length, 1)
-  assert.is(entity.MediaAssets[0].uid, 'urn:test:media:1'),
-    assert.is(entity.MediaAssets[0].File.uid, 'urn:test:file:1')
   assert.is(
     entity.MediaAssets[0].File.contentUrl,
     'http://example.org/file1.mp3',

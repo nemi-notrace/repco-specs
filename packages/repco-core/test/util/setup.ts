@@ -41,12 +41,15 @@ export async function setup2(test: Test) {
   return [first, second]
 }
 
-export async function setupDb(test: Test, port: number) {
+export async function setup(test: Test) {
   if (process.env.DOCKER_SETUP === '0') return
-  const env = {
-    ...process.env,
-    POSTGRES_PORT: '' + port,
-    DATABASE_URL: `postgresql://test:test@localhost:${port}/tests`,
+  if (!dockerUp) {
+    await spawn(
+      'docker-compose',
+      ['-f', COMPOSE_FILE, 'up', '-d', '--remove-orphans'],
+      { log: test.comment },
+    )
+    dockerUp = true
   }
   const verbose = !!process.env.VERBOSE
   await spawn(
@@ -89,6 +92,14 @@ export async function setupDb(test: Test, port: number) {
   }, {})
   return env.DATABASE_URL
 }
+
+process.on('beforeExit', () => {
+  if (process.env.DOCKER_SETUP === '0') return
+  if (dockerDown) return
+  spawn('docker-compose', ['-f', COMPOSE_FILE, 'down', '--rm'])
+    .catch(() => console.error('>> Failed to teardown docker container.'))
+    .finally(() => (dockerDown = true))
+})
 
 function spawn(
   command: string,

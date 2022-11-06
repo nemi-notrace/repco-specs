@@ -183,25 +183,6 @@ export async function ingestUpdatesFromDataSource(
   }
 }
 
-export async function storeEntityBatchFromDataSource(
-  prisma: PrismaClient,
-  datasources: DataSourceRegistry,
-  datasource: DataSource,
-  batch: EntityBatch,
-) {
-  for (const entity of batch.entities) {
-    entity.agent = datasource.definition.uid
-    // console.log('IN', entity)
-    const stored = await storeEntityWithDataSourceFallback(
-      prisma,
-      datasources,
-      entity,
-    )
-    // console.log('rid', stored.revision.id)
-    // console.log('OUT', stored)
-  }
-}
-
 /**
  * Returns a string which serves as a marker for the last fetch.
  * Usually this is a timestamp or something similar

@@ -10,8 +10,6 @@ import { ContentGroupingVariant, EntityBatch, EntityForm } from '../entity.js'
 import { extractCursorAndMap, FetchOpts } from '../util/datamapping.js'
 import { HttpError } from '../util/error.js'
 
-const DEFAULT_ENDPOINT = 'https://cba.fro.at/wp-json/wp/v2'
-
 // series:
 // https://cba.fro.at/wp-json/wp/v2/series?page=1&per_page=1&_embed&orderby=modified&order=asc&modified_after=2021-07-27T10:29:04
 // stations:
@@ -255,7 +253,7 @@ export class CbaDataSource implements DataSource {
   }
 
   private _mapPost(post: CbaPost): EntityForm[] {
-    const content = {
+    const content: form.ContentItemInput = {
       content: post.content.rendered,
       contentFormat: 'text/html',
       title: post.title.rendered,
@@ -263,7 +261,8 @@ export class CbaDataSource implements DataSource {
       // primaryGroupingUid: null,
       subtitle: 'missing',
       summary: post.excerpt.rendered,
-      mediaAssets: post.mediaAssets,
+      MediaAssets: post.mediaAssets.map((uri) => ({ uri })),
+      PrimaryGrouping: { uri: this._urn('series', post.post_parent) },
     }
     const revisionId = this._revisionUrn(
       'post',

@@ -1,8 +1,6 @@
 import express from 'express'
 import type { Request } from 'express'
-import { CID } from 'multiformats/cid'
 import { ContentLoaderStream, Repo } from 'repco-core'
-import { Readable } from 'stream'
 import { ServerError } from '../error.js'
 import { getLocals } from '../lib.js'
 
@@ -35,16 +33,20 @@ router.post('/sync/:repoDid', async (req, res) => {
   res.json({ ok: true })
 })
 
+type RequestT = Request<any, any, any, any, Record<string, any>>
+
+router.get('/', async (req, res) => {})
+
 router.get('/changes/:repoDid', async (req, res) => {
   const { prisma } = getLocals(res)
   const { repoDid } = req.params
   const repo = await Repo.open(prisma, repoDid)
   const from = req.query.from?.toString()
-  const revisionStream = repo.createRevisionBatchStream({ from })
+  const revisionStream = repo.createRevisionBatchStream(from || '0', {})
   const content = req.query.content?.toString()
   let stream: AsyncIterable<any>
   if (content) {
-    stream = ContentLoaderStream(revisionStream, true)
+    stream = ContentLoaderStream(revisionStream)
   } else {
     stream = revisionStream
   }

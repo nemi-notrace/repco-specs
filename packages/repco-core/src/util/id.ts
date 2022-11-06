@@ -14,11 +14,11 @@ export function createRepoId(timestamp?: Date | number): string {
 }
 
 export function createRevisionId(timestamp?: Date | number): string {
-  return 'r.' + MultiID.createTimeAndRandom(timestamp).toString()
+  return 'v' + MultiID.createTimeAndRandom(timestamp).toString()
 }
 
 export function createEntityId(timestamp?: Date | number): string {
-  return 'e.' + MultiID.createTimeAndRandom(timestamp).toString()
+  return 'e' + MultiID.createTimeAndRandom(timestamp).toString()
 }
 
 export enum IDFormats {

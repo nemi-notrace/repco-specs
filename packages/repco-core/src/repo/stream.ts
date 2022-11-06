@@ -1,6 +1,5 @@
 import { Prisma, Revision } from 'repco-prisma'
 import { Readable } from 'streamx'
-import { EntityWithRevision } from '../entity.js'
 import type { Repo } from '../repo.js'
 
 export type RevisionFilter = {
@@ -12,9 +11,7 @@ export type RevisionFilter = {
 export async function* ContentLoaderStream<
   B extends boolean,
   T extends B extends false ? Revision : Revision[],
-  U extends B extends false ? EntityWithRevision : EntityWithRevision[]
->(input: RevisionStream<B, T>, inBatches: B): AsyncGenerator<U>
-{
+>(input: RevisionStream<B, T>) {
   for await (const chunk of input) {
     const batch = input.asBatch(chunk)
     const out = []
@@ -22,10 +19,7 @@ export async function* ContentLoaderStream<
       const entity = await input.repo.resolveContent(revision)
       out.push(entity)
     }
-    if (inBatches) yield out as U
-    else {
-      for (const chunk of out) yield chunk as U
-    }
+    yield out
   }
 }
 
@@ -34,15 +28,14 @@ export class RevisionStream<
   T extends B extends false ? Revision : Revision[],
 > extends Readable<T> {
   finished = false
-  cursor = '0'
 
   constructor(
     public repo: Repo,
     public readonly batch: B,
+    public cursor: string = '',
     public filter: RevisionFilter = {},
   ) {
     super()
-    if (filter.from) this.cursor = filter.from
   }
 
   asBatch(chunk: T): Revision[] {
