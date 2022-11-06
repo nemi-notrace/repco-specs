@@ -6,7 +6,7 @@ import {
   StructureKind,
   VariableDeclarationKind,
 } from 'ts-morph'
-import { firstLower } from './util.js'
+import { firstLower, hasSkipAnnotation } from './util.js'
 
 export const writeArray = (
   writer: CodeBlockWriter,
@@ -15,27 +15,6 @@ export const writeArray = (
 ) => array.forEach((line) => writer.write(line).conditionalNewLine(newLine))
 
 const SKIP_FIELDS = new Set(['revisionId', 'Revision'])
-
-function writeHelpers(sourceFile: SourceFile) {
-  // sourceFile.addStatements((writer) => {
-  //   writer.newLine()
-  //   writeArray(writer, [
-  //     '// Helper schema for Decimal fields',
-  //     'z',
-  //     '.instanceof(Decimal)',
-  //     '.or(z.string())',
-  //     '.or(z.number())',
-  //     '.refine((value) => {',
-  //     '  try {',
-  //     '    return new Decimal(value);',
-  //     '  } catch (error) {',
-  //     '    return false;',
-  //     '  }',
-  //     '})',
-  //     '.transform((value) => new Decimal(value));',
-  //   ])
-  // })
-}
 
 export function generateZodInputs(
   datamodel: DMMF.Datamodel,
@@ -82,6 +61,7 @@ export function generateZodInputs(
                   .filter((f) => !f.isReadOnly)
                   // remove fields that are explicitly skipped
                   .filter((f) => !SKIP_FIELDS.has(f.name))
+                  .filter((f) => !hasSkipAnnotation(f.documentation))
                   // remove Uid fields, because we add the references themselves
                   // .filter((f) => !f.name.endsWith('Uid'))
                   .forEach((field) => {
@@ -149,16 +129,21 @@ export function getZodConstructor(field: DMMF.Field) {
   } else if (field.kind === 'enum') {
     zodType = `z.nativeEnum(${field.type})`
   } else if (field.kind === 'object') {
-    zodType = `common.link`
-    // zodType = getRelatedModelName(field.type)
+    if (field.type === 'Revision') {
+      zodType = `common.revisionLink`
+    } else {
+      zodType = `common.link`
+    }
   }
 
-  if (field.isList) extraModifiers.push('array()')
-  if (
-    (!field.isRequired && field.type !== 'Json') ||
-    (field.kind === 'object' && field.isList)
-  ) {
+  if (field.isList) {
+    extraModifiers.push('array()')
+  }
+  if (!field.isRequired && field.type !== 'Json') {
     extraModifiers.push('nullish()')
+  }
+  if (field.kind === 'object' && field.isList) {
+    extraModifiers.push('optional()')
   }
 
   // if (field.hasDefaultValue) extraModifiers.push('optional()')

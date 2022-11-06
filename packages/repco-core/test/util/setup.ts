@@ -74,23 +74,7 @@ export async function setup(test: Test) {
     log: test.comment,
     stdio: 'inherit',
   })
-  test.teardown(() => {
-    spawn(
-      'docker',
-      [
-        'compose',
-        '-p',
-        'repco-postgres-test-' + port,
-        '-f',
-        COMPOSE_FILE,
-        'down',
-      ],
-      { verbose },
-    ).catch((err) =>
-      test.comment('Failed to teardown docker container: ' + err.message),
-    )
-  }, {})
-  return env.DATABASE_URL
+  await new Promise((resolve) => setTimeout(resolve, 1000))
 }
 
 process.on('beforeExit', () => {
