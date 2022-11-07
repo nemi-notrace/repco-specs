@@ -46,7 +46,7 @@ export const revisionIpld = z.object({
   entityUris: z.array(z.string()).default([]),
   revisionUris: z.array(z.string()).default([]),
   contentCid: common.cid,
-  derivedFromUid: common.uid.nullish(),
+  derivedFromUid: common.uid.optional(),
 })
 
 export type RevisionIpld = {
@@ -63,23 +63,19 @@ export type RevisionIpld = {
   entityUris: string[]
   revisionUris: string[]
   contentCid: CID
-  derivedFromUid?: common.Uid | null
+  derivedFromUid?: common.Uid
 }
 
 export const rootIpld = z.object({
   kind: z.literal('root'),
   sig: common.bytes,
   commit: common.cid,
-  cap: z.string(),
-  agent: z.string()
 })
 
 export type RootIpld = {
   kind: 'root'
   sig: Uint8Array
   commit: CID
-  cap: string
-  agent: string
 }
 
 export function revisionIpldToDb(
