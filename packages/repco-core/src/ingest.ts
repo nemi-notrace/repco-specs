@@ -1,6 +1,6 @@
 import { PrismaClient } from 'repco-prisma'
 import { DataSourcePluginRegistry, DataSourceRegistry } from './datasource.js'
-import { EntityRevision } from './entity.js'
+import { EntityWithRevision } from './entity.js'
 
 // export type WorkerConstructor
 export enum WorkerStatus {
