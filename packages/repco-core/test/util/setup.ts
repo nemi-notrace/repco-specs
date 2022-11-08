@@ -89,7 +89,7 @@ export async function setupDb(test: Test, port: number) {
   )
   await spawn('yarn', ['prisma', 'migrate', 'reset', '-f', '--skip-generate'], {
     log: test.comment,
-    stdio: 'inherit',
+    // stdio: 'inherit',
     env,
   })
   return env.DATABASE_URL
