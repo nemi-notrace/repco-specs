@@ -1,4 +1,5 @@
 import { form } from 'repco-prisma'
+import * as zod from 'zod'
 import { fetch } from 'undici'
 import { CbaPost, CbaSeries } from './cba/types.js'
 import {
@@ -9,6 +10,8 @@ import {
 import { ContentGroupingVariant, EntityBatch, EntityForm } from '../entity.js'
 import { extractCursorAndMap, FetchOpts } from '../util/datamapping.js'
 import { HttpError } from '../util/error.js'
+
+const DEFAULT_ENDPOINT = 'https://cba.fro.at/wp-json/wp/v2'
 
 // series:
 // https://cba.fro.at/wp-json/wp/v2/series?page=1&per_page=1&_embed&orderby=modified&order=asc&modified_after=2021-07-27T10:29:04
@@ -36,6 +39,12 @@ function parseUrn(urn: string) {
     path: parts.slice(3).join(':'),
   }
 }
+
+const configSchema = zod.object({
+  endpoint: zod.string().url().optional(),
+  apiKey: zod.string().optional()
+})
+type ConfigSchema = zod.infer<typeof configSchema>
 
 export class CbaDataSourcePlugin implements DataSourcePlugin {
   createInstance(config: any) {

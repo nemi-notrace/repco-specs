@@ -1,6 +1,10 @@
-import { PrismaClient } from 'repco-prisma'
-import { DataSourcePluginRegistry, DataSourceRegistry } from './datasource.js'
+import {
+  DataSourcePluginRegistry,
+  DataSourceRegistry,
+  ingestUpdatesFromDataSource,
+} from './datasource.js'
 import { EntityWithRevision } from './entity.js'
+import { Repo } from './repo.js'
 
 // export type WorkerConstructor
 export enum WorkerStatus {
@@ -9,10 +13,10 @@ export enum WorkerStatus {
 }
 
 export abstract class Worker<Conf = void> {
-  constructor(public plugins: DataSourcePluginRegistry, public repo: Repo) { }
+  constructor(public plugins: DataSourcePluginRegistry, public repo: Repo) {}
   abstract start(): Promise<void>
   // abstract status(): WorkerStatus
-  async stop(): Promise<void> { }
+  async stop(): Promise<void> {}
 }
 
 export abstract class Indexer<Conf = void> extends Worker<Conf> {
@@ -42,8 +46,13 @@ export class Ingester extends Worker<void> {
     }
   }
 
-    for (const ds of this.datasources.all()) {
-      // ingestUpdatesFromDataSource(this.state.prisma, this.datasources, ds)
+  async start(): Promise<void> {
+    await this.init()
+    while (true) {
+      console.log('start work...')
+      await this.work()
+      console.log('wait...')
+      await new Promise((resolve) => setTimeout(resolve, this.interval))
     }
   }
 
