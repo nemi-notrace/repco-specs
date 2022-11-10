@@ -1,21 +1,21 @@
 import 'source-map-support/register.js'
+import getPort from 'get-port'
 import { Test } from 'brittle'
 import {
   ChildProcess,
   spawn as spawnProcess,
   SpawnOptions,
 } from 'node:child_process'
-import { PrismaClient } from '../../lib.js'
 import type { Prisma } from 'repco-prisma'
+import { PrismaClient } from '../../lib.js'
 
 const COMPOSE_FILE = '../../test/docker-compose.test.yml'
-const RUNNING_DBS = new Set()
 
 type SetupOpts = {
   port?: number
 }
 export async function setup(test: Test, opts: SetupOpts = {}) {
-  const pgPort = opts.port || 20432
+  const pgPort = opts.port || (await getPort())
   const databaseUrl = await setupDb(test, pgPort)
   process.env.DATABASE_URL = databaseUrl
   let log: Prisma.LogDefinition[] = []
@@ -27,46 +27,26 @@ export async function setup(test: Test, opts: SetupOpts = {}) {
     },
   })
   // @ts-ignore
-  prisma.$on("query", async (e: any) => {
+  prisma.$on('query', async (e: any) => {
     if (process.env.QUERY_LOG) {
-      console.log(`${e.query} ${e.params}`)
+      test.comment(`QUERY: ${e.query} ${e.params}`)
     }
   })
   return prisma
 }
 
 export async function setup2(test: Test) {
-  return Promise.all([
-    setup(test, { port: 15000 }),
-    setup(test, { port: 15001 }),
-  ])
+  const first = await setup(test)
+  const second = await setup(test)
+  return [first, second]
 }
 
 export async function setupDb(test: Test, port: number) {
   if (process.env.DOCKER_SETUP === '0') return
   const env = {
+    ...process.env,
     POSTGRES_PORT: '' + port,
     DATABASE_URL: `postgresql://test:test@localhost:${port}/tests`,
-  }
-  if (!RUNNING_DBS.has(port)) {
-    RUNNING_DBS.add(port)
-    await spawn(
-      'docker',
-      [
-        'compose',
-        '-p',
-        'repco-postgres-test-' + port,
-        '-f',
-        COMPOSE_FILE,
-        'up',
-        '-d',
-        '--remove-orphans',
-      ],
-      {
-        log: test.comment,
-        env,
-      },
-    )
   }
   const verbose = !!process.env.VERBOSE
   await spawn(
@@ -89,28 +69,27 @@ export async function setupDb(test: Test, port: number) {
   )
   await spawn('yarn', ['prisma', 'migrate', 'reset', '-f', '--skip-generate'], {
     log: test.comment,
-    // stdio: 'inherit',
+    verbose,
     env,
   })
+  test.teardown(() => {
+    spawn(
+      'docker',
+      [
+        'compose',
+        '-p',
+        'repco-postgres-test-' + port,
+        '-f',
+        COMPOSE_FILE,
+        'down',
+      ],
+      { verbose },
+    ).catch((err) =>
+      test.comment('Failed to teardown docker container: ' + err.message),
+    )
+  }, {})
   return env.DATABASE_URL
 }
-
-process.on('beforeExit', () => {
-  if (process.env.DOCKER_SETUP === '0') return
-  for (const port of RUNNING_DBS) {
-    RUNNING_DBS.delete(port)
-    spawn('docker', [
-      'compose',
-      '-p',
-      'repco-postgres-test-' + port,
-      '-f',
-      COMPOSE_FILE,
-      'down',
-    ]).catch((err) =>
-      console.error('>> Failed to teardown docker container:', err),
-    )
-  }
-})
 
 function spawn(
   command: string,

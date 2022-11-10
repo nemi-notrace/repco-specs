@@ -35,6 +35,8 @@ enum AgentType {
 model Repo {
   did  String  @id @unique
   name String?
+  did  String  @id @unique
+  name String? @unique
   head String? @unique
   tail String? @unique
 
@@ -77,7 +79,7 @@ model User {
 }
 
 model Cursor {
-  uid String @id @unique
+  uid    String  @id @unique
   cursor String?
 }
 
@@ -157,7 +159,7 @@ model Revision {
   // Commit        Commit    @relation("RevisionToCommit", fields: [commitCid], references: [cid])
 
   derivedFromUid String?
-  DerivedFrom SourceRecord? @relation("DerivedRevisions", fields: [derivedFromUid], references: [uid])
+  DerivedFrom    SourceRecord? @relation("DerivedRevisions", fields: [derivedFromUid], references: [uid])
 
   // entity relations
   ContentGrouping  ContentGrouping?
@@ -175,11 +177,10 @@ model Revision {
   Metadata         Metadata?
 }
 
-
 /// @repco(Entity)
 model SourceRecord {
-  uid         String @id @unique
-  revisionId  String @unique
+  uid        String @id @unique
+  revisionId String @unique
 
   /// MIME type
   contentType String
@@ -188,11 +189,11 @@ model SourceRecord {
   body        String
   meta        Json?
 
-  dataSourceUid String?
-  DataSource    DataSource? @relation(fields: [dataSourceUid], references: [uid])
+  dataSourceUid    String?
+  DataSource       DataSource? @relation(fields: [dataSourceUid], references: [uid])
   /// @repco(skip)
-  DerivedRevisions Revision[] @relation("DerivedRevisions")
-  Revision               Revision      @relation(fields: [revisionId], references: [id])
+  DerivedRevisions Revision[]  @relation("DerivedRevisions")
+  Revision         Revision    @relation(fields: [revisionId], references: [id])
 }
 
 // Domain data model
@@ -273,7 +274,7 @@ model MediaAsset {
   File          File           @relation("file", fields: [fileUid], references: [uid])
   ContentItems  ContentItem[]
   Transcripts   Transcript[]
-  Chapters      Chapter[]      
+  Chapters      Chapter[]
   TeaserImage   File?          @relation("thumbnail", fields: [teaserImageUid], references: [uid])
   License       License?       @relation(fields: [licenseUid], references: [uid])
   Contributions Contribution[]
