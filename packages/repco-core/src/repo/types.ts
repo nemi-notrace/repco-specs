@@ -70,12 +70,16 @@ export const rootIpld = z.object({
   kind: z.literal('root'),
   sig: common.bytes,
   commit: common.cid,
+  cap: z.string(),
+  agent: z.string()
 })
 
 export type RootIpld = {
   kind: 'root'
   sig: Uint8Array
   commit: CID
+  cap: string
+  agent: string
 }
 
 export function revisionIpldToDb(
