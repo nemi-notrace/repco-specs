@@ -78,9 +78,24 @@ model User {
   Agent Agent  @relation(fields: [did], references: [did])
 }
 
+<<<<<<< HEAD
 model Cursor {
   uid    String  @id @unique
   cursor String?
+=======
+// model DurableCursor {
+//   uid String @id @unique
+//   cursor string
+//   webhook string?
+// }
+
+model Ucans {
+  scope String 
+  audience String
+  resource String
+  token String
+  cid String @id @unique
+>>>>>>> refactor: reset db schema due to issues
 }
 
 model DataSource {
@@ -93,8 +108,15 @@ model DataSource {
   SourceRecords SourceRecord[]
 }
 
+enum KeypairScope {
+  INSTANCE
+  REPO
+}
+
 model Keypair {
   did    String @id @unique
+  scope  KeypairScope
+  name   String?
   secret String
 }
 
