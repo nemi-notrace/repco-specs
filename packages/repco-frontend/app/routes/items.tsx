@@ -3,7 +3,7 @@ import { Form, useLoaderData, useSearchParams } from '@remix-run/react'
 import { gql } from '@urql/core'
 import { SanitizedHTML } from '~/components/sanitized-html'
 import { Button, NavButton } from '~/components/ui/Button'
-import { Card } from '~/components/ui/Card'
+import { RepcoCardAdvanced } from '~/components/ui/Card'
 import { Pager } from '~/components/ui/Pager'
 import { SearchBar } from '~/components/ui/SearchBar'
 import type {
@@ -82,7 +82,12 @@ export default function IndexRoute() {
 
       {data.contentItems?.nodes &&
         data.contentItems?.nodes.map((node, i) => (
-          <Card key={i}>
+          <RepcoCardAdvanced
+            repcoTitle={node.title}
+            summary={node.summary}
+            uid={node.uid}
+            key={i}
+          >
             <h5 className="font-medium leading-tight text-xl mt-0 mb-2 text-blue-600">
               <SanitizedHTML allowedTags={['a', 'p']} html={node.title} />
             </h5>
@@ -107,7 +112,7 @@ export default function IndexRoute() {
                 show more
               </NavButton>
             </div>
-          </Card>
+          </RepcoCardAdvanced>
         ))}
       <Pager
         pageInfo={data.contentItems?.pageInfo}
