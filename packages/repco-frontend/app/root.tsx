@@ -1,4 +1,4 @@
-import type { LinksFunction, LoaderFunction, MetaFunction } from '@remix-run/node'
+import type { LoaderFunction, MetaFunction } from '@remix-run/node'
 import {
   Links,
   LiveReload,
@@ -8,14 +8,27 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react'
-import styles from './styles/app.css'
+import type { Theme } from '~/utils/theme-provider'
+import { ThemeBody, ThemeHead, useTheme } from '~/utils/theme-provider'
+import { getThemeSession } from '~/utils/theme.server'
+
+export type LoaderData = {
+  theme: Theme | null
+}
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const themeSession = await getThemeSession(request)
+
+  const data: LoaderData = {
+    theme: themeSession.getTheme(),
+  }
 
   return data
 }
 
 export const meta: MetaFunction = () => ({
   charset: 'utf-8',
-  title: 'New Remix App',
+  title: 'repco',
   viewport: 'width=device-width,initial-scale=1',
 })
 
@@ -38,15 +51,5 @@ function App() {
         <LiveReload />
       </body>
     </html>
-  )
-}
-
-export default function AppWithProviders() {
-  const data = useLoaderData<LoaderData>()
-
-  return (
-    <ThemeProvider specifiedTheme={data.theme}>
-      <App />
-    </ThemeProvider>
   )
 }
