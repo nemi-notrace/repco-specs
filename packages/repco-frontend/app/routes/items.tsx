@@ -1,3 +1,4 @@
+import DarkModeToggle from '~/components/darkmodeToggle'
 import type { LoaderFunction } from '@remix-run/node'
 import { NavLink, useLoaderData, useSearchParams } from '@remix-run/react'
 import { gql } from '@urql/core'
@@ -74,7 +75,8 @@ export default function IndexRoute() {
   const includes = searchParams.getAll('includes')
   const orderBy = searchParams.getAll('orderBy')
   return (
-    <div className="md:w-full">
+    <div className="md:w-full bg-orange-500 dark:bg-black">
+      <DarkModeToggle />
       <SearchBar path="/items" />
       <div className="break-before-auto py-2 px-2">
         {data.contentItems?.nodes.map((node, i) => (

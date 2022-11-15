@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { Outlet } from 'react-router-dom'
+import DarkModeToggle from './darkmodeToggle'
 import { NavBar } from './ui/bars/NavBar'
 import { Button } from './ui/primitives/Button'
 import { Logo } from './ui/primitives/logo'
@@ -9,6 +10,7 @@ export function Layout(props: PropsWithChildren) {
     <div>
       <div className="flex justify-between">
         <Logo />
+        <DarkModeToggle />
         <div>
           <Button disabled={true}>sign in</Button>
           <Button disabled={true}>sign up</Button>

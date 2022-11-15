@@ -1,4 +1,4 @@
-import type { LinksFunction, MetaFunction } from '@remix-run/node'
+import type { LinksFunction, LoaderFunction, MetaFunction } from '@remix-run/node'
 import {
   Links,
   LiveReload,
@@ -6,34 +6,47 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from '@remix-run/react'
-import tailwindUrl from './styles/tailwind.css'
+import styles from './styles/app.css'
 
-export const links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: tailwindUrl }]
+  return data
 }
 
 export const meta: MetaFunction = () => ({
   charset: 'utf-8',
-  title: 'repco',
+  title: 'New Remix App',
   viewport: 'width=device-width,initial-scale=1',
 })
 
-export default function App() {
+function App() {
+  const data = useLoaderData<LoaderData>()
+  const [theme] = useTheme()
+
   return (
-    <html lang="en">
+    <html lang="en" className={theme ?? ''}>
       <head>
         <Meta />
         <Links />
+        <ThemeHead ssrTheme={Boolean(data.theme)} />
       </head>
       <body>
-        <Layout>
-          <Outlet />
-        </Layout>
+        <Outlet />
+        <ThemeBody ssrTheme={Boolean(data.theme)} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
       </body>
     </html>
+  )
+}
+
+export default function AppWithProviders() {
+  const data = useLoaderData<LoaderData>()
+
+  return (
+    <ThemeProvider specifiedTheme={data.theme}>
+      <App />
+    </ThemeProvider>
   )
 }
