@@ -9,7 +9,12 @@ import {
   useLoaderData,
 } from '@remix-run/react'
 import type { Theme } from '~/utils/theme-provider'
-import { ThemeBody, ThemeHead, useTheme } from '~/utils/theme-provider'
+import {
+  ThemeBody,
+  ThemeHead,
+  ThemeProvider,
+  useTheme,
+} from '~/utils/theme-provider'
 import { getThemeSession } from '~/utils/theme.server'
 
 export type LoaderData = {
@@ -28,7 +33,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const meta: MetaFunction = () => ({
   charset: 'utf-8',
-  title: 'repco',
+  title: 'New Remix App',
   viewport: 'width=device-width,initial-scale=1',
 })
 
@@ -51,5 +56,15 @@ function App() {
         <LiveReload />
       </body>
     </html>
+  )
+}
+
+export default function AppWithProviders() {
+  const data = useLoaderData<LoaderData>()
+
+  return (
+    <ThemeProvider specifiedTheme={data.theme}>
+      <App />
+    </ThemeProvider>
   )
 }
