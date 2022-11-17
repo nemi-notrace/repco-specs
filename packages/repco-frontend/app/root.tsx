@@ -3,7 +3,6 @@ import {
   Links,
   LiveReload,
   Meta,
-  Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
@@ -16,7 +15,12 @@ import {
   useTheme,
 } from '~/utils/theme-provider'
 import { getThemeSession } from '~/utils/theme.server'
+import styles from './styles/app.css'
+import { Layout } from './components/layout'
 
+export function links() {
+  return [{ rel: 'stylesheet', href: styles }]
+}
 export type LoaderData = {
   theme: Theme | null
 }
@@ -49,7 +53,7 @@ function App() {
         <ThemeHead ssrTheme={Boolean(data.theme)} />
       </head>
       <body>
-        <Outlet />
+        <Layout />
         <ThemeBody ssrTheme={Boolean(data.theme)} />
         <ScrollRestoration />
         <Scripts />

@@ -2,6 +2,7 @@ import DarkModeToggle from '~/components/darkmodeToggle'
 import type { LoaderFunction } from '@remix-run/node'
 import { NavLink, useLoaderData, useSearchParams } from '@remix-run/react'
 import { gql } from '@urql/core'
+import { Layout } from '~/components/layout'
 import { SanitizedHTML } from '~/components/sanitized-html'
 import { SearchBar } from '~/components/ui/bars/SearchBar'
 import { Pager } from '~/components/ui/Pager'
@@ -76,6 +77,7 @@ export default function IndexRoute() {
   const orderBy = searchParams.getAll('orderBy')
   return (
     <div className="md:w-full bg-orange-500 dark:bg-black">
+      <Layout />
       <DarkModeToggle />
       <SearchBar path="/items" />
       <div className="break-before-auto py-2 px-2">

@@ -1,4 +1,4 @@
-import styles from '~/styles/styles.css'
+import styles from '~/styles/app.css'
 import type { LinksFunction } from '@remix-run/node'
 import { Theme, Themed, useTheme } from '~/utils/theme-provider'
 

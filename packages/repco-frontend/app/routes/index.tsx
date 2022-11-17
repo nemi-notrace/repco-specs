@@ -1,7 +1,21 @@
+import styles from '~/styles/styles.css'
+import type { LinksFunction } from '@remix-run/node'
+import { Theme, useTheme } from '~/utils/theme-provider'
+
+export const links: LinksFunction = () => [{ rel: 'stylesheet', href: styles }]
+
 export default function Index() {
+  const [, setTheme] = useTheme()
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) =>
+      prevTheme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT,
+    )
+  }
   return (
     <div className="px-6 py-6">
-      <h2 className="font-medium leading-tight text-4xl mt-0 mb-6 text-grey-600">
+      <button onClick={toggleTheme}>Toggle</button>
+      <h2 className="font-medium leading-tight text-4xl mt-0 mb-6 dark:text-pink-500  text-blue-600">
         Welcome
       </h2>
       <p>
