@@ -1,20 +1,21 @@
 import type { PropsWithChildren } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
+import { NavBar } from './ui/bars/NavBar'
+import { Button } from './ui/primitives/Button'
+import { Logo } from './ui/primitives/logo'
 
 export function Layout(props: PropsWithChildren) {
   return (
     <div>
-      <Nav />
-      <h1>repco</h1>
-      {props.children}
+      <div className="flex justify-between">
+        <Logo />
+        <div>
+          <Button disabled={true}>sign in</Button>
+          <Button disabled={true}>sign up</Button>
+        </div>
+      </div>
+      <NavBar />
+      <Outlet />
     </div>
-  )
-}
-
-export function Nav() {
-  return (
-    <nav>
-      <NavLink to="/items">Items</NavLink>
-    </nav>
   )
 }

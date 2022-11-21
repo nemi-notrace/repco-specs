@@ -56,6 +56,7 @@ export const meta: MetaFunction = ({ data }) => {
 
 export default function IndexRoute() {
   const { data } = useLoaderData<LoaderData>()
+
   if (!data) {
     return 'Ooops, something went wrong :('
   }
@@ -64,27 +65,38 @@ export default function IndexRoute() {
     return 'Not found'
   }
   return (
-    <main>
-      <h2>{node.title}</h2>
-      <p>
-        <em>
-          UID: <code>{node.uid}</code>
-        </em>
+    <div className="w-1/2 px-2 py-4">
+      <h2 className="font-medium leading-tight text-4xl mt-0 mb-2 text-grey-600">
+        {node.title}
+      </h2>
+      <p className="font-light leading-relaxed mt-0 mb-4 text-grey-600">
+        <b>UID:</b> {node.uid}
         <br />
-        <em>
-          Revision: <code>{node.revisionId}</code>
-        </em>
+        <b>Revision:</b> {node.revisionId}
       </p>
-      <SanitizedHTML html={node.content} />
-      <ul>
-        {node.mediaAssets.nodes.map((node) => (
+      <div className="text-lg font-normal leading-normal mt-6 mb-4 text-grey-600">
+        <SanitizedHTML html={node.content} />
+      </div>
+      <ul className="list-disc">
+        {node.mediaAssets.nodes.map((node: any) => (
           <li key={node.uid}>
-            media asset {node.uid}
+            <p className="font-light leading-relaxed mt-0 mb-4 text-grey-600">
+              <b>media asset </b>
+              {node.uid}
+            </p>
             <br />
-            {node.file && <a href={node.file.contentUrl}>download</a>}
+
+            {node.file && (
+              <a
+                className="text-lg px-0 py-4 font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                href={node.file.contentUrl}
+              >
+                DOWNLOAD
+              </a>
+            )}
           </li>
         ))}
       </ul>
-    </main>
+    </div>
   )
 }
