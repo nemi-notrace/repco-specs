@@ -8,7 +8,7 @@ import {
 } from '@radix-ui/react-icons'
 import { NavLink } from '@remix-run/react'
 import { useEffect, useState } from 'react'
-import { getStorage, setStorage } from '~/lib/helpers'
+import { usePlaylists } from '~/utils/usePlaylists.client'
 import { NewPlaylistBar } from './bars/NewPlaylistBar'
 import { Input } from './primitives/Input'
 
@@ -58,23 +58,23 @@ export function CollapsibleFilter() {
 
 export function CollapsiblePlaylist(props: Props) {
   const [isOpen, setIsOpen] = useState(false)
-  const [playlists, setPlaylists] = useState([])
+  const [playlists, getStorage, setStorage] = usePlaylists([])
   const [showData, setShowData] = useState(true)
   const [added, setAdded] = useState('')
 
   function addToPlaylist(playlist: string, node: string) {
     setStorage(playlist, node)
-    setPlaylists(getStorage('playlists'))
+    getStorage('playlists')
     setAdded(playlist)
   }
 
   useEffect(() => {
     if (!showData) return
     if (typeof window !== 'undefined') {
-      setPlaylists(getStorage('playlists'))
+      getStorage('playlists')
       setShowData(false)
     }
-  }, [showData])
+  }, [showData, playlists])
 
   return (
     <CollapsiblePrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
