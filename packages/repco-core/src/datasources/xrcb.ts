@@ -187,7 +187,7 @@ export class XrcbDataSource implements DataSource {
     const records = []
     {
       let postsCursor = cursor.posts
-      if (!postsCursor) postsCursor = '1970-01-01T01:00:00'
+      if (!postsCursor) postsCursor = '2022-01-01T01:00:00'
       const perPage = 2
       const url = this._url(
         `/podcasts?page=1&per_page=${perPage}&_embed&orderby=modified&order=asc&modified_after=${postsCursor}`,
@@ -454,7 +454,7 @@ export class XrcbDataSource implements DataSource {
         mediaType: 'image',
         //License: null,
         //Contribution
-        File: { uri: imageId },
+        File: { uri: fileId },
       }
 
       const imageFileEntity: EntityForm = {
@@ -465,7 +465,7 @@ export class XrcbDataSource implements DataSource {
       const imageEntity: EntityForm = {
         type: 'MediaAsset',
         content: imageContent,
-        entityUris: [fileId],
+        entityUris: [imageId],
       }
 
       postEntity.content.MediaAssets = [
