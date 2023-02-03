@@ -1,8 +1,8 @@
-import {LitElement, html, css} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import { LitElement, html, css } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 
-@customElement('post-card-thumbnail')
-export class PostCardThumbnailElement extends LitElement {
+@customElement('repco-post-card-thumbnail')
+export class RepcoPostCardThumbnailElement extends LitElement {
   static override styles = css`
     :host {
       display: flex;
@@ -19,18 +19,18 @@ export class PostCardThumbnailElement extends LitElement {
       border-top-right-radius: var(--post-thumbnail-border-right-radius);
       border-bottom-right-radius: var(--post-thumbnail-border-right-radius);
     }
-  `;
+  `
 
   @property()
-  src = '';
+  src = ''
 
   override render() {
-    return html`<img src="${this.src}" />`;
+    return html`<img src="${this.src}" />`
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'post-card-thumbnail': PostCardThumbnailElement;
+    'repco-post-card-thumbnail': RepcoPostCardThumbnailElement
   }
 }
