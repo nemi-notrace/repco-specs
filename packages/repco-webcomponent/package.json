@@ -1,5 +1,5 @@
 {
-  "name": "repco-recommander-box",
+  "name": "repco-webcomponent",
   "private": true,
   "version": "0.0.1",
   "description": "shows a list of recommended posts",
